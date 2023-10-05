@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Literature Skimming</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <style>
+    /* CSS styles as before */
+
+    /* ... */
+  </style>
+</head>
+<body>
+  <div id="video-background">
+    <!-- Video code as before -->
+  </div>
+
+  <div id="container">
+    <div id="left">
+      <div class="heading-block">
+        <h1><img src="literature-skimming.png" alt="Literature Skimming"> Literature Skimming</h1>
+      </div>
+      <br>
+      <form method="POST" action="" enctype="multipart/form-data">
+        <input type="file" id="file-input" accept=".txt,.pdf" onchange="loadFile(event)">
+        <br>
+        <button type="submit" id="submit-btn" name="submit-btn">Submit</button>
+      </form>
+      <br>
+      <textarea id="input-text" name="input-text"></textarea>
+    </div>
+    <div id="right">
+      <label for="output-text">Output:</label>
+      <br>
+      <textarea id="output-text" rows="10" cols="30" readonly><?php echo fetchTextFromDatabase(); ?></textarea>
+    </div>
+  </div>
+
+  <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+  <script>
+    /* JavaScript code to load file contents */
+    function loadFile(event) {
+      var file = event.target.files[0];
+      
+      if (file.type === 'text/plain') {
+        // For text files
+        var reader = new FileReader();
+        
+        reader.onload = function(e) {
+          var contents = e.target.result;
+          document.getElementById('input-text').value = contents;
+        };
+        
+        reader.readAsText(file);
+      } else if (file.type === 'application/pdf') {
+        // For PDF files
+        var fileReader = new FileReader();
+
+        fileReader.onload = function() {
+          var typedarray = new Uint8Array(this.result);
+
+          // Load the PDF using PDF.js
+          PDFJS.getDocument(typedarray)
+            .then(function(pdf) {
+              var numPages = pdf.numPages;
+              var pdfText = '';
+
+              for (var i = 1; i <= numPages; i++) {
+                pdf.getPage(i)
+                  .then(function(page) {
+                    return page.getTextContent();
+                  })
+                  .then(function(textContent) {
+                    var pageText = textContent.items.map(function(item) {
+                      return item.str;
+                    }).join(' ');
+                    pdfText += pageText + '\n';
+                    document.getElementById('input-text').value = pdfText;
+                  });
+              }
+            });
+        };
+
+        fileReader.readAsArrayBuffer(file);
+      }
+    }
+  </script>
+</body>
+</html>
